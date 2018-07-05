@@ -2,7 +2,7 @@
 import 'babel-polyfill'
 import BigNumber from 'bignumber.js'
 import Path from 'path'
-import { agent, siacoinsToHastings, call, hastingsToSiacoins, isRunning, connect, errCouldNotConnect } from '../src/sia.js'
+import { agent, siacoinsToHastings, call, hastingsToSiacoins, isRunning, connect, errCouldNotConnect } from '../src/hyperspace.js'
 import http from 'http'
 import readdir from 'readdir'
 import { expect } from 'chai'
@@ -11,7 +11,7 @@ import { spy, stub } from 'sinon'
 import nock from 'nock'
 import fs from 'fs'
 
-// Mock the process calls required for testing Siad launch functionality.
+// Mock the process calls required for testing Hsd launch functionality.
 const mockProcessObject = {
 	stdout: {
 		pipe: spy(),
@@ -25,13 +25,13 @@ const mock = {
 		spawn: stub().returns(mockProcessObject),
 	},
 }
-const { launch, makeRequest } = proxyquire('../src/sia.js', mock)
+const { launch, makeRequest } = proxyquire('../src/hyperspace.js', mock)
 
 BigNumber.config({DECIMAL_PLACES: 28})
 
 const hastingsPerSiacoin = new BigNumber('1000000000000000000000000')
 
-describe('sia.js wrapper library', () => {
+describe('hyperspace.js wrapper library', () => {
 	describe('unit conversion functions', () => {
 		it('converts from siacoins to hastings correctly', () => {
 			const maxSC = new BigNumber('100000000000000000000000')
@@ -61,32 +61,32 @@ describe('sia.js wrapper library', () => {
 			expect(convertedSiacoin.toString()).to.equal(originalSiacoin.toString())
 		})
 	})
-	describe('siad interaction functions', () => {
+	describe('hsd interaction functions', () => {
 		describe('isRunning', () => {
-			it('returns true when siad is running', async() => {
-				nock('http://localhost:9980')
+			it('returns true when hsd is running', async() => {
+				nock('http://localhost:5580')
 				  .get('/gateway')
 				  .reply(200, 'success')
-				const running = await isRunning('localhost:9980')
+				const running = await isRunning('localhost:5580')
 				expect(running).to.be.true
 			})
-			it('returns false when siad is not running', async() => {
-				nock('http://localhost:9980')
+			it('returns false when hsd is not running', async() => {
+				nock('http://localhost:5580')
 				  .get('/gateway')
 				  .replyWithError('error')
-				const running = await isRunning('localhost:9980')
+				const running = await isRunning('localhost:5580')
 				expect(running).to.be.false
 			})
 		})
 		describe('connect', () => {
-			it('throws an error if siad is unreachable', async() => {
-				nock('http://localhost:9980')
+			it('throws an error if hsd is unreachable', async() => {
+				nock('http://localhost:5580')
 				  .get('/gateway')
 				  .replyWithError('test-error')
 				let didThrow = false
 				let err
 				try {
-					await connect('localhost:9980')
+					await connect('localhost:5580')
 				} catch (e) {
 					didThrow = true
 					err = e
@@ -95,42 +95,42 @@ describe('sia.js wrapper library', () => {
 				expect(err).to.equal(errCouldNotConnect)
 			})
 
-			let siad
-			it('returns a valid siad object if sia is reachable', async() => {
-				nock('http://localhost:9980')
+			let hsd
+			it('returns a valid hsd object if hyperspace is reachable', async() => {
+				nock('http://localhost:5580')
 				  .get('/gateway')
 				  .reply(200, 'success')
-				siad = await connect('localhost:9980')
-				expect(siad).to.have.property('call')
-				expect(siad).to.have.property('isRunning')
+				hsd = await connect('localhost:5580')
+				expect(hsd).to.have.property('call')
+				expect(hsd).to.have.property('isRunning')
 			})
-			it('can make api calls using siad.call', async() => {
-				nock('http://localhost:9980')
+			it('can make api calls using hsd.call', async() => {
+				nock('http://localhost:5580')
 				  .get('/gateway')
 				  .reply(200, 'success')
 
-				const gateway = await siad.call('/gateway')
+				const gateway = await hsd.call('/gateway')
 				expect(gateway).to.equal('success')
 			})
 		})
 		describe('makeRequest', () => {
 			it('constructs the correct request options given a string parameter', () => {
 				const expectedOpts = {
-					url: 'http://localhost:9980/test',
+					url: 'http://localhost:5580/test',
 					json: true,
 					timeout: 10000,
 					headers: {
 						'User-Agent': 'Sia-Agent',
 					},
 				}
-				expect(makeRequest('localhost:9980', '/test')).to.contain.keys(expectedOpts)
+				expect(makeRequest('localhost:5580', '/test')).to.contain.keys(expectedOpts)
 			})
 			it('constructs the correct request options given an object parameter', () => {
 				const testparams = {
 					test: 'test',
 				}
 				const expectedOpts = {
-					url: 'http://localhost:9980/test',
+					url: 'http://localhost:5580/test',
 					qs: testparams,
 					headers: {
 						'User-Agent': 'Sia-Agent',
@@ -138,7 +138,7 @@ describe('sia.js wrapper library', () => {
 					timeout: 10000,
 					json: true,
 				}
-				expect(makeRequest('localhost:9980', { url: '/test', qs: testparams })).to.contain.keys(expectedOpts)
+				expect(makeRequest('localhost:5580', { url: '/test', qs: testparams })).to.contain.keys(expectedOpts)
 			})
 		})
 		describe('launch', () => {
@@ -147,9 +147,9 @@ describe('sia.js wrapper library', () => {
 				mockProcessObject.stdout.pipe.reset()
 				mockProcessObject.stderr.pipe.reset()
 			})
-			it('starts siad with sane defaults if no flags are passed', () => {
+			it('starts hsd with sane defaults if no flags are passed', () => {
 				const expectedFlags = [
-					'--api-addr=localhost:9980',
+					'--api-addr=localhost:5580',
 					'--host-addr=:9982',
 					'--rpc-addr=:9981',
 				]
@@ -157,9 +157,9 @@ describe('sia.js wrapper library', () => {
 				expect(mock['child_process'].spawn.called).to.be.true
 				expect(mock['child_process'].spawn.getCall(0).args[1]).to.deep.equal(expectedFlags)
 			})
-			it('starts siad with --sia-directory given sia-directory', () => {
+			it('starts hsd with --hyperspace-directory given hyperspace-directory', () => {
 				const testSettings = {
-					'sia-directory': 'testdir',
+					'hyperspace-directory': 'testdir',
 				}
 				try {
 					fs.mkdirSync('./testdir')
@@ -172,7 +172,7 @@ describe('sia.js wrapper library', () => {
 				expect(mock['child_process'].spawn.called).to.be.true
 				const flags = mock['child_process'].spawn.getCall(0).args[1]
 				const path = mock['child_process'].spawn.getCall(0).args[0]
-				expect(flags).to.contain('--sia-directory=testdir')
+				expect(flags).to.contain('--hyperspace-directory=testdir')
 				expect(path).to.equal('testpath')
 			})
 			it('sets boolean flags correctly', () => {
@@ -181,19 +181,19 @@ describe('sia.js wrapper library', () => {
 				expect(flags.indexOf('--testflag=true') !== -1).to.be.true
 				expect(flags.indexOf('--testflag=false') !== -1).to.be.false
 			})
-			it('starts siad with the same pid as the calling process', () => {
+			it('starts hsd with the same pid as the calling process', () => {
 				launch('testpath')
 				if (process.geteuid) {
 					expect(mock['child_process'].spawn.getCall(0).args[2].uid).to.equal(process.geteuid())
 				}
 			})
-			it('pipes output to file correctly given no sia-dir', () => {
+			it('pipes output to file correctly given no hyperspace-dir', () => {
 				launch('testpath')
-				expect(mockProcessObject.stdout.pipe.calledWith(fs.createWriteStream('siad-output.log')))
+				expect(mockProcessObject.stdout.pipe.calledWith(fs.createWriteStream('hsd-output.log')))
 			})
-			it('pipes output to file correctly given a sia-dir', () => {
-				launch('testpath', { 'sia-directory': 'testdir' })
-				expect(mockProcessObject.stdout.pipe.calledWith(fs.createWriteStream(Path.join('testdir', 'siad-output.log'))))
+			it('pipes output to file correctly given a hyperspace-dir', () => {
+				launch('testpath', { 'hyperspace-directory': 'testdir' })
+				expect(mockProcessObject.stdout.pipe.calledWith(fs.createWriteStream(Path.join('testdir', 'hsd-output.log'))))
 			})
 		})
 		describe('call', () => {

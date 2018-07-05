@@ -1,5 +1,5 @@
-// sia.js: a lightweight node wrapper for starting, and communicating with
-// a Sia daemon (siad).
+// hyperspace.js: a lightweight node wrapper for starting, and communicating with
+// a Hyperspace daemon (hsd).
 import BigNumber from 'bignumber.js'
 import fs from 'fs'
 import { spawn } from 'child_process'
@@ -13,10 +13,10 @@ const agent = new http.Agent({
 })
 
 // sia.js error constants
-export const errCouldNotConnect = new Error('could not connect to the Sia daemon')
+export const errCouldNotConnect = new Error('could not connect to the Hyperspace daemon')
 
-// Siacoin -> hastings unit conversion functions
-// These make conversion between units of Sia easy and consistent for developers.
+// Space Cash -> hastings unit conversion functions
+// These make conversion between units of Space Cash easy and consistent for developers.
 // Never return exponentials from BigNumber.toString, since they confuse the API
 BigNumber.config({ EXPONENTIAL_AT: 1e+9 })
 BigNumber.config({ DECIMAL_PLACES: 30 })
@@ -61,14 +61,14 @@ const call = (address, opts) => new Promise((resolve, reject) => {
 	})
 })
 
-// launch launches a new instance of siad using the flags defined by `settings`.
+// launch launches a new instance of hsd using the flags defined by `settings`.
 // this function can `throw`, callers should catch errors.
 // callers should also handle the lifecycle of the spawned process.
 const launch = (path, settings) => {
 	const defaultSettings = {
-		'api-addr': 'localhost:9980',
-		'host-addr': ':9982',
-		'rpc-addr': ':9981',
+		'api-addr': 'localhost:5580',
+		'host-addr': ':5582',
+		'rpc-addr': ':5581',
 		'authenticate-api': false,
 		'disable-api-security': false,
 	}
@@ -77,26 +77,26 @@ const launch = (path, settings) => {
 	const mapFlags = (key) => '--' + key + '=' + mergedSettings[key]
 	const flags = Object.keys(mergedSettings).filter(filterFlags).map(mapFlags)
 
-	const siadOutput = (() => {
+	const hsdOutput = (() => {
 		if (typeof mergedSettings['sia-directory'] !== 'undefined') {
-			return fs.createWriteStream(Path.join(mergedSettings['sia-directory'], 'siad-output.log'))
+			return fs.createWriteStream(Path.join(mergedSettings['sia-directory'], 'hsd-output.log'))
 		}
-		return fs.createWriteStream('siad-output.log')
+		return fs.createWriteStream('hsd-output.log')
 	})()
 
 	const opts = { }
 	if (process.geteuid) {
 		opts.uid = process.geteuid()
 	}
-	const siadProcess = spawn(path, flags, opts)
-	siadProcess.stdout.pipe(siadOutput)
-	siadProcess.stderr.pipe(siadOutput)
-	return siadProcess
+	const hsdProcess = spawn(path, flags, opts)
+	hsdProcess.stdout.pipe(hsdOutput)
+	hsdProcess.stderr.pipe(hsdOutput)
+	return hsdProcess
 }
 
 // isRunning returns true if a successful call can be to /gateway
 // using the address provided in `address`.  Note that this call does not check
-// whether the siad process is still running, it only checks if a Sia API is
+// whether the hsd process is still running, it only checks if a Sia API is
 // reachable.
 async function isRunning(address) {
 	try {
@@ -110,22 +110,22 @@ async function isRunning(address) {
 	}
 }
 
-// siadWrapper returns an instance of a Siad API configured with address.
-const siadWrapper = (address) => {
-	const siadAddress = address
+// hsdWrapper returns an instance of a Hsd API configured with address.
+const hsdWrapper = (address) => {
+	const hsdAddress = address
 	return {
-		call: (options)  => call(siadAddress, options),
-		isRunning: () => isRunning(siadAddress),
+		call: (options)  => call(hsdAddress, options),
+		isRunning: () => isRunning(hsdAddress),
 	}
 }
 
-// connect connects to a running Siad at `address` and returns a siadWrapper object.
+// connect connects to a running Hsd at `address` and returns a hsdWrapper object.
 async function connect(address) {
 	const running = await isRunning(address)
 	if (!running) {
 		throw errCouldNotConnect
 	}
-	return siadWrapper(address)
+	return hsdWrapper(address)
 }
 
 export {
