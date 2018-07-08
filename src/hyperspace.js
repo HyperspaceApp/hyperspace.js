@@ -78,8 +78,8 @@ const launch = (path, settings) => {
 	const flags = Object.keys(mergedSettings).filter(filterFlags).map(mapFlags)
 
 	const hsdOutput = (() => {
-		if (typeof mergedSettings['sia-directory'] !== 'undefined') {
-			return fs.createWriteStream(Path.join(mergedSettings['sia-directory'], 'hsd-output.log'))
+		if (typeof mergedSettings['hyperspace-directory'] !== 'undefined') {
+			return fs.createWriteStream(Path.join(mergedSettings['hyperspace-directory'], 'hsd-output.log'))
 		}
 		return fs.createWriteStream('hsd-output.log')
 	})()
