@@ -150,8 +150,8 @@ describe('hyperspace.js wrapper library', () => {
 			it('starts hsd with sane defaults if no flags are passed', () => {
 				const expectedFlags = [
 					'--api-addr=localhost:5580',
-					'--host-addr=:9982',
-					'--rpc-addr=:9981',
+					'--host-addr=:5582',
+					'--rpc-addr=:5581',
 				]
 				launch('testpath')
 				expect(mock['child_process'].spawn.called).to.be.true
