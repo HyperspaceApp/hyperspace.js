@@ -7,3 +7,6 @@ lib
 
 # Vim
 *.swp
+
+hsd-output.log
+testdir

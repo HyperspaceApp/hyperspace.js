@@ -12,7 +12,7 @@ const agent = new http.Agent({
 	maxSockets: 20,
 })
 
-// sia.js error constants
+// hyperspace.js error constants
 export const errCouldNotConnect = new Error('could not connect to the Hyperspace daemon')
 
 // Space Cash -> hastings unit conversion functions
@@ -21,9 +21,9 @@ export const errCouldNotConnect = new Error('could not connect to the Hyperspace
 BigNumber.config({ EXPONENTIAL_AT: 1e+9 })
 BigNumber.config({ DECIMAL_PLACES: 30 })
 
-const hastingsPerSiacoin = new BigNumber('10').toPower(24)
-const siacoinsToHastings = (siacoins) => new BigNumber(siacoins).times(hastingsPerSiacoin)
-const hastingsToSiacoins = (hastings) => new BigNumber(hastings).dividedBy(hastingsPerSiacoin)
+const hastingsPerSpaceCash = new BigNumber('10').toPower(24)
+const spaceCashToHastings = (spaceCash) => new BigNumber(spaceCash).times(hastingsPerSpaceCash)
+const hastingsToSpaceCash = (hastings) => new BigNumber(hastings).dividedBy(hastingsPerSpaceCash)
 
 // makeRequest takes an address and opts and returns a valid request.js request
 // options object.
@@ -45,7 +45,7 @@ export const makeRequest = (address, opts) => {
 	return callOptions
 }
 
-// Call makes a call to the Sia API at `address`, with the request options defined by `opts`.
+// Call makes a call to the Hyperspace API at `address`, with the request options defined by `opts`.
 // returns a promise which resolves with the response if the request completes successfully
 // and rejects with the error if the request fails.
 const call = (address, opts) => new Promise((resolve, reject) => {
@@ -96,7 +96,7 @@ const launch = (path, settings) => {
 
 // isRunning returns true if a successful call can be to /gateway
 // using the address provided in `address`.  Note that this call does not check
-// whether the hsd process is still running, it only checks if a Sia API is
+// whether the hsd process is still running, it only checks if a Hyperspace API is
 // reachable.
 async function isRunning(address) {
 	try {
@@ -133,7 +133,7 @@ export {
 	launch,
 	isRunning,
 	call,
-	siacoinsToHastings,
-	hastingsToSiacoins,
+	spaceCashToHastings,
+	hastingsToSpaceCash,
 	agent,
 }
