@@ -1,6 +1,6 @@
 {
   "name": "hyperspace.js",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "Node wrapper for hsd of the Hyperspace network",
   "repository": {
     "type": "git",

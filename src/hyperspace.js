@@ -38,7 +38,7 @@ export const makeRequest = (address, opts) => {
 		callOptions.timeout = 10000
 	}
 	callOptions.headers = {
-		'User-Agent': 'Sia-Agent',
+		'User-Agent': 'Hyperspace-Agent',
 	}
 	callOptions.pool = agent
 
